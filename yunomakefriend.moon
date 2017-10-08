@@ -2,24 +2,90 @@
 json = require "json"
 process = require "process"
 argparse = require "argparse"
+moonscript = require "moonscript"
+util = require "moonscript.util"
+colors = require "term.colors"
 
 parser = with argparse "yunomakefriend", "Time to make self-hosted friends with YunoRock."
-	with \argument "domain"
-		\args 1
+	\command "list"
+	with \command "request-friendship"
+		with \argument "domain"
+			\args 1
 
 arguments = parser\parse!
 
-moonscript = require "moonscript"
-friends = moonscript.loadfile "friends.moon"
+Friend = class
+	new: (name, opt) =>
+		unless name
+			error "missing 'name' argument", 0
 
+		@name = name
 
-util = require "moonscript.util"
-util.setfenv friends, {
-	friend: (name, opt) ->
-		print "friend of mine: ", name
-		print require("pl.pretty").write opt
-}
+		@status = opt.status or "unknown"
 
+		@givenTokens = opt.given or {}
+		@wantsTokens = opt.wants or {}
+
+		-- Tokens that are both “given” and “wanted”.
+		@validatedTokens = [token for token in *@givenTokens when @\wants token]
+
+	wants: (token) =>
+		for e in *@wantsTokens
+			if e == token
+				return true
+		false
+
+	validated: (token) =>
+		for e in *@validatedTokens
+			if e == token
+				return true
+		false
+
+	print: =>
+		io.write "#{@name}"
+
+		color = switch @status
+			when "true friend"
+				colors.green
+			when "asked"
+				colors.yellow
+			when "received"
+				colors.blue
+			else
+				(...) -> ...
+
+		io.write color " (friendship #{@status})"
+
+		io.write "\n"
+
+		if @status == "true friend"
+			for token in *@validatedTokens
+				io.write "  - ", colors.green("#{token}"), " (wants + given)\n"
+			for token in *@wantsTokens
+				unless @\validated token
+					io.write "  - ", colors.yellow("#{token}"), " (wants)\n"
+			for token in *@givenTokens
+				unless @\validated token
+					io.write "  - ", colors.blue("#{token}"), " (given)\n"
+
+friends = do
+	code = moonscript.loadfile "friends.moon"
+
+	friends = {}
+
+	util.setfenv code, {
+		friend: (name, opt) ->
+			table.insert friends, Friend name, opt
+	}
+
+	code!
+
+	friends
+
+if arguments.list
+	for friend in *friends
+		friend\print!
+	os.exit 0
 
 ssh, reason = process.exec "ssh", {"anonymous@#{arguments.domain}"}
 
