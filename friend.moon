@@ -1,4 +1,4 @@
-Friend = class
+class
 	new: (name, opt) =>
 		unless name
 			error "missing 'name' argument", 0
