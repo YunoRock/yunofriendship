@@ -95,7 +95,7 @@ unless ssh
 
 sshInput = ""
 
-readSSHLine = (ssh) -> 
+readSSHLine = (ssh) ->
 	coroutine.wrap ->
 		while process.waitpid ssh\pid!, process.WNOHANG
 			s = ssh\stderr!
@@ -116,7 +116,14 @@ readSSHLine = (ssh) ->
 
 beyondMotd = false
 for line in readSSHLine ssh
-	if beyondMotd
+	unless beyondMotd
+		if line\match '"I am a friendly server"'
+			beyondMotd = true
+		else
+			print "MOTD: ", line
+	else
+		ssh\stdin json.encode("let's be friends").."\n"
+
 		success, input = pcall -> json.decode line
 		unless success
 			print "message not understood: ", line
@@ -127,8 +134,3 @@ for line in readSSHLine ssh
 		if input == "hi"
 			print "sending friendship request™"
 			ssh\stdin json.encode("let's be friends").."\n"
-	else
-		if line\match '"I am a friendly server"'
-			beyondMotd = true
-		else
-			print "MOTD: ", line
