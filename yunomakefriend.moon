@@ -6,6 +6,8 @@ moonscript = require "moonscript"
 util = require "moonscript.util"
 colors = require "term.colors"
 
+Friend = require("friend")
+
 parser = with argparse "yunomakefriend", "Time to make self-hosted friends with YunoRock."
 	\command "list"
 	with \command "request-friendship"

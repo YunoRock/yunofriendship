@@ -1,3 +1,5 @@
+colors = require "term.colors"
+
 class
 	new: (name, opt) =>
 		unless name
