@@ -25,4 +25,4 @@ if arguments.friendname
 	myfriend = friendutil.importFriends friendPath
 	myfriend.status = "true friend"
 	friendutil.exportFriends myfriend, friendPath
-	print "accepting #{arguments.friendname} has a true friend"
+	print "accepting #{arguments.friendname} as a true friend"
