@@ -22,13 +22,6 @@ diagram {
 			rightnote="sharedpassword is generated
 				by the server"]; // fontsize=13
 
-    client -> remoted [label = "command: \"let's be friends\", name: \"yourname\"" ];
-    remoted -> client [label = "answer: \"new friend!\",
-			friend: \"<representation of a friend, you>\",
-			password: \"sharedpassword\"",
-			rightnote="sharedpassword is generated
-				by the server"]; // fontsize=13
-
     client -> remoted [label = "command: \"I know what we can do!\",
 		   name: \"yourname\",
 		   password: \"sharedpassword\",
