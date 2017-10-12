@@ -37,7 +37,7 @@ diagram {
 	client -> remoted [label = "command: \"let's do this!\",
 		   name: \"yourname\",
 		   password: \"sharedpassword\",
-		   service: { name: \"help/nsd\", info: <service's informations> }" ];
+		   services: [ service: { name: \"help/nsd\", info: <service's informations> }]" ];
 	remoted -> client [label = "answer: \"Yeah!\",
 			friend: \"<representation of a friend, you>\",
 			service: { name: \"help/nsd\", answer: \"ok\" }",

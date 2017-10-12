@@ -7,13 +7,21 @@ class
 
 		@name = name
 
+		-- possible status are: received, asked, true friend
 		@status = opt.status or "unknown"
+		@servicesConfigured = opt.services or opt.servicesConfigured or {}
 
 		@givenTokens = opt.given or opt.givenTokens or {}
 		@wantsTokens = opt.wants or opt.wantsTokens or {}
 
 		-- Tokens that are both “given” and “wanted”.
 		@validatedTokens = [token for token in *@givenTokens when @\wants token]
+
+	services: (service) =>
+		for e in *@servicesConfigured
+			if e == service
+				return true
+		false
 
 	wants: (token) =>
 		for e in *@wantsTokens
