@@ -5,8 +5,8 @@ importFriends = (friendPath) ->
 	file, reason = io.open friendPath, "r+"
 
 	unless file
-		-- print "warning: friends cannot be reached :(", "path: '#{friendPath}'"
-		-- print "         ... reason: #{reason}"
+		print "warning: friends cannot be reached :(", "path: '#{friendPath}'"
+		print "         ... reason: #{reason}"
 		return
 
 	serpent = require "serpent"

@@ -27,8 +27,34 @@ class
 				return true
 		false
 
+	str: =>
+		printStr = "#{@name}: "
+
+		printStr ..= " (friendship #{@status})"
+
+		if @status == "true friend"
+			unless #@validatedTokens == 0
+				printStr ..= "(wants + given): "
+			for token in *@validatedTokens
+				printStr ..= "#{token},"
+
+			unless #@wantsTokens == 0
+				printStr ..= "; (wants): "
+			for token in *@wantsTokens
+				-- unless @\validated token
+				printStr ..= "#{token},"
+
+			unless #@givenTokens == 0
+				printStr ..= "; (given): "
+			for token in *@givenTokens
+				-- unless @\validated token
+				printStr ..= "#{token},"
+
+		printStr
+
+
 	print: =>
-		io.write "#{@name}"
+		printStr = "#{@name}: "
 
 		color = switch @status
 			when "true friend"
@@ -40,16 +66,16 @@ class
 			else
 				(...) -> ...
 
-		io.write color " (friendship #{@status})"
-
-		io.write "\n"
+		printstr ..= color " (friendship #{@status})"
 
 		if @status == "true friend"
 			for token in *@validatedTokens
-				io.write "  - ", colors.green("#{token}"), " (wants + given)\n"
+				printStr ..= "  - " .. colors.green("#{token}") .. " (wants + given);"
 			for token in *@wantsTokens
-				unless @\validated token
-					io.write "  - ", colors.yellow("#{token}"), " (wants)\n"
+				-- unless @\validated token
+				printStr ..= "  - " .. colors.yellow("#{token}") .. " (wants);"
 			for token in *@givenTokens
-				unless @\validated token
-					io.write "  - ", colors.blue("#{token}"), " (given)\n"
+				-- unless @\validated token
+				printStr ..= "  - " .. colors.blue("#{token}") .. " (given)"
+
+		printStr
