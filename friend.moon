@@ -9,8 +9,8 @@ class
 
 		@status = opt.status or "unknown"
 
-		@givenTokens = opt.given or {}
-		@wantsTokens = opt.wants or {}
+		@givenTokens = opt.given or opt.givenTokens or {}
+		@wantsTokens = opt.wants or opt.wantsTokens or {}
 
 		-- Tokens that are both “given” and “wanted”.
 		@validatedTokens = [token for token in *@givenTokens when @\wants token]
@@ -28,27 +28,22 @@ class
 		false
 
 	str: =>
-		printStr = "#{@name}: "
+		printStr = "#{@name}: (friendship #{@status}): "
 
-		printStr ..= " (friendship #{@status})"
+		unless #@validatedTokens == 0
+			printStr ..= "(wants + given): "
+		for token in *@validatedTokens
+			printStr ..= "#{token},"
 
-		if @status == "true friend"
-			unless #@validatedTokens == 0
-				printStr ..= "(wants + given): "
-			for token in *@validatedTokens
-				printStr ..= "#{token},"
+		unless #@wantsTokens == 0
+			printStr ..= "; (wants): "
+		for token in *@wantsTokens
+			printStr ..= "#{token},"
 
-			unless #@wantsTokens == 0
-				printStr ..= "; (wants): "
-			for token in *@wantsTokens
-				-- unless @\validated token
-				printStr ..= "#{token},"
-
-			unless #@givenTokens == 0
-				printStr ..= "; (given): "
-			for token in *@givenTokens
-				-- unless @\validated token
-				printStr ..= "#{token},"
+		unless #@givenTokens == 0
+			printStr ..= "; (given): "
+		for token in *@givenTokens
+			printStr ..= "#{token},"
 
 		printStr
 
@@ -66,16 +61,13 @@ class
 			else
 				(...) -> ...
 
-		printstr ..= color " (friendship #{@status})"
+		printStr ..= color " (friendship #{@status})"
 
-		if @status == "true friend"
-			for token in *@validatedTokens
-				printStr ..= "  - " .. colors.green("#{token}") .. " (wants + given);"
-			for token in *@wantsTokens
-				-- unless @\validated token
-				printStr ..= "  - " .. colors.yellow("#{token}") .. " (wants);"
-			for token in *@givenTokens
-				-- unless @\validated token
-				printStr ..= "  - " .. colors.blue("#{token}") .. " (given)"
+		for token in *@validatedTokens
+			printStr ..= "\n\t(wants + given): " .. colors.green("#{token}")
+		for token in *@wantsTokens
+			printStr ..= "\n\t(wants): " .. colors.yellow("#{token}")
+		for token in *@givenTokens
+			printStr ..= "\n\t(given): " .. colors.blue("#{token}")
 
-		printStr
+		print printStr

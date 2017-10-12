@@ -11,6 +11,11 @@ cachePath = "/tmp"
 
 require "friendutil"
 
+say = (jsonMsg) ->
+	io.stdout\write jsonMsg
+	io.stdout\write "\n"
+	io.stdout\flush!
+
 -- when asking to be friends: read the friend's file (create one if necessary) then check his status
 beFriends = (friendname) ->
 	-- print "my friend ", friendname
@@ -22,62 +27,47 @@ beFriends = (friendname) ->
 	if myfriend
 		switch myfriend.status
 			when "asked", "true friend"
-				io.stdout\write json.encode {answer: "friendship is magic"}
-				io.stdout\write "\n"
-				io.stdout\flush!
+				say json.encode {answer: "friendship is magic"}
 			when "received"
-				io.stdout\write json.encode {answer: "let me think about it"}
-				io.stdout\write "\n"
-				io.stdout\flush!
+				say json.encode {answer: "let me think about it"}
 			else
-				io.stdout\write json.encode {answer: "status unknown :("}
-				io.stdout\write "\n"
-				io.stdout\flush!
+				say json.encode {answer: "status unknown :("}
 	else
 		-- if not present: write tmp friend file
 		f = Friend friendname, {status: "received"}
 		friendutil.exportFriends f, friendPath
-
-		io.stdout\write json.encode {answer: "new friend: #{f\str!}"}
-		io.stdout\write "\n"
-		io.stdout\flush!
+		say json.encode {answer: "new friend!", friend: "#{f\str!}"}
 
 shareTokens = (friendReq) ->
 
 	friendname = friendReq.name
 
 	unless friendReq.wants
-		io.stdout\write json.encode {answer: "You didn't provide useful info! :("}
-		io.stdout\write "\n"
-		io.stdout\flush!
+		say json.encode {answer: "You didn't provide useful info! :("}
 		return
 
 	-- search for a friend
 	friendPath = "#{cachePath}/friend_#{friendname}.moon"
 	myfriend = friendutil.importFriends friendPath
 
+	-- TODO: check passwords
+	-- explanations: on the first connection the friend get a password then has to provide it for any further communication
+	-- TODO: write how they should interact
+
 	-- keep state of what your friend wants
-
-	if friendReq.wants
-		print "here what your friend wants: " .. json.encode friendReq.wants
-
-	unless myfriend.wants
-		myfriend.wants = {}
-
 	for token in *friendReq.wants
-		print "insert " .. token .. "\n"
-		table.insert myfriend.wants, token
+		present = false
+		for recordedToken in *myfriend.wantsTokens
+			if token == recordedToken
+				present = true
 
-	for token in *myfriend.wants
-		print "should be seen: " .. token
+		continue if present -- do not add a token twice
+
+		table.insert myfriend.wantsTokens, token
 
 	f = Friend myfriend.name, myfriend
-
 	friendutil.exportFriends f, friendPath
-
-	io.stdout\write json.encode {answer: "here my friend: #{f\str!}"}
-	io.stdout\write "\n"
-	io.stdout\flush!
+	say json.encode {answer: "here my friend!", friend: "#{f\str!}"}
 
 -- main code
 while true
@@ -85,7 +75,6 @@ while true
 	line = io.read "*line"
 
 	unless line
-		print "line == ''"
 		break
 
 	decodedline = {}
@@ -93,36 +82,29 @@ while true
 	success, decodedline = pcall -> json.decode line
 	-- if json.decode crashes, please continue
 	unless success
-		io.stdout\write json.encode {answer: "I can't decrypt what you're saying!"}
-		io.stdout\write "\n"
-		io.stdout\flush!
+		say json.encode {answer: "I can't decrypt what you're saying!"}
 		continue
 
 	unless decodedline
 		decodedline = {}
-		io.stdout\write json.encode {answer: "You didn't provide useful info! :("}
-		io.stdout\write "\n"
-		io.stdout\flush!
+		say json.encode {answer: "You didn't provide useful info! :("}
 		continue
 
 	-- your friend should send his/her name each time
 	unless decodedline.name
-		io.stdout\write json.encode {answer: "I don't know who you are my friend :("}
-		io.stdout\write "\n"
-		io.stdout\flush!
+		say json.encode {answer: "I don't know who you are my friend :("}
 		continue
 
 	-- select the right command to execute
-	-- TODO: for every command other than 'let's be friends' you should send the shared secret
 	if decodedline.command and decodedline.command == "let's be friends"
 		beFriends decodedline.name
 	elseif decodedline.command and decodedline.command == "I know what we can do!"
+		-- your friend should send his/her password each time
+		unless decodedline.password
+			say json.encode {answer: "Huh, you didn't provide the password :/"}
+			continue
 		shareTokens decodedline
 	else
-		io.stdout\write json.encode {answer: "You didn't provide useful info! :("}
-		io.stdout\write "\n"
-		io.stdout\flush!
+		say json.encode {answer: "You didn't provide useful info! :("}
 
-io.stdout\write '"See you! \\o_"\n'
-io.stdout\flush!
-
+say '"See you! \\o_"'

@@ -1,0 +1,20 @@
+diagram {
+    edge_length = 500;
+    default_fontsize = 13;  // default value is 11
+    span_height = 8;  // default value is 40
+    node_height = 60;  // default value is 40
+    activation = none;
+
+    // Numbering edges automaticaly
+    autonumber = True;
+
+    // Change note color
+    default_note_color = lightblue;
+
+
+    client [label = "you"];
+    remoted [label = "friend"];
+
+    client -> remoted [label = "command: \"let's be friends\", name: \"yourname\"" ];
+    remoted -> client [label = "answer: \"new friend!\", friend: \"yourname: (friendship received): \""]; // fontsize=13
+}
