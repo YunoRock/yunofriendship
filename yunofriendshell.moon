@@ -69,7 +69,7 @@ shareTokens = (friendReq) ->
 	friendutil.exportFriends f, friendPath
 	say json.encode {answer: "here my friend!", friend: "#{f\str!}"}
 
--- main code
+-- main code: see the documentation for further explanations about the protocol
 while true
 
 	line = io.read "*line"

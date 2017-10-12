@@ -16,5 +16,37 @@ diagram {
     remoted [label = "friend"];
 
     client -> remoted [label = "command: \"let's be friends\", name: \"yourname\"" ];
-    remoted -> client [label = "answer: \"new friend!\", friend: \"yourname: (friendship received): \""]; // fontsize=13
+    remoted -> client [label = "answer: \"new friend!\",
+			friend: \"<representation of a friend, you>\",
+			password: \"sharedpassword\"",
+			rightnote="sharedpassword is generated
+				by the server"]; // fontsize=13
+
+    client -> remoted [label = "command: \"let's be friends\", name: \"yourname\"" ];
+    remoted -> client [label = "answer: \"new friend!\",
+			friend: \"<representation of a friend, you>\",
+			password: \"sharedpassword\"",
+			rightnote="sharedpassword is generated
+				by the server"]; // fontsize=13
+
+    client -> remoted [label = "command: \"I know what we can do!\",
+		   name: \"yourname\",
+		   password: \"sharedpassword\",
+		   whatiwant: [ \"beHelped/nsd\", \"help/nsd\" ]",
+		   rightnote="you say what you're willing to do
+			   and what you ask to your friend
+			   through tokens" ];
+    remoted -> client [label = "answer: \"ok, here what I want\",
+			friend: \"<representation of a friend, you>\",
+			given: [ \"beHelped/nsd\", \"help/nsd\" ]",
+			leftnote=""]; // fontsize=13
+
+	client -> remoted [label = "command: \"let's do this!\",
+		   name: \"yourname\",
+		   password: \"sharedpassword\",
+		   service: { name: \"help/nsd\", info: <service's informations> }" ];
+	remoted -> client [label = "answer: \"Yeah!\",
+			friend: \"<representation of a friend, you>\",
+			service: { name: \"help/nsd\", answer: \"ok\" }",
+			leftnote=""]; // fontsize=13
 }
