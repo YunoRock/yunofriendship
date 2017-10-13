@@ -9,7 +9,7 @@ friend "LJF.example", {
 
 friend "Jambo.example", {
 	status: "true friend" -- { "asked", "received", "true friend" }
-	wants: { "helpsTo/nsd", "helpsWith/nsd", "helpsWith/borg", "helpsTo/borg" }
-	given: { "helpsTo/nsd", "helpsWith/nsd", "helpsWith/borg", "helpsTo/borg" }
+	wants: { "help/nsd", "beHelped/nsd", "beHelped/borg", "help/borg" }
+	given: { "help/nsd", "beHelped/nsd", "beHelped/borg", "help/borg" }
 }
 

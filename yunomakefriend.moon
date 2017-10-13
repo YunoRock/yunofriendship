@@ -8,43 +8,114 @@ colors = require "term.colors"
 
 Friend = require("friend")
 
-parser = with argparse "yunomakefriend", "Time to make self-hosted friends with YunoRock."
-	\command "list"
-	with \command "request-friendship"
+require "friendutil"
+
+-- FIXME
+cachePath = "/tmp"
+
+scandir = (directory) ->
+	t = {}
+    pfile = io.popen "ls -a #{directory}"
+    for filename in pfile\lines!
+        table.insert t, filename
+    pfile\close!
+    t
+
+getFriend = (friendname) ->
+	for i in *scandir "#{cachePath}/friend_*"
+		myfriend = friendutil.importFriends i
+		if myfriend.name == friendname
+			f = Friend myfriend.name, myfriend
+			f\print!
+			return f
+
+parser = with argparse "yunomakefriend", "Tell your friends you love them!"
+	with \command "list"
+		\description "list all your friends!"
+	with \command "acceptfriend"
+		with \argument "friendname"
+			\args 1
+		\description "accept a friend! <3  (done in local, no communication)"
+	with \command "iwant"
+		with \argument "friendname"
+			\args 1
+		with \argument "tokenList"
+			\args 1
+		\description "give a friend some tokens to help him/her or asking for help (done in local, no communication)"
+	with \command "newfriend"
+		with \argument "friendname"
+			\args 1
+		\description "create a new friend (or erase an existing one), debug tool"
+	with \command "request"
 		with \argument "domain"
 			\args 1
+		\description "let's ask someone to be friends! (request a friend through ssh anonymous@domain)"
+	with \command "sendtokens"
+		with \argument "domain"
+			\args 1
+		\description "send the tokens (what you are willing to do and accept) to a friend! (through ssh anonymous@domain)"
+	with \command "letsdothis"
+		with \argument "domain"
+			\args 1
+		\description "send the service configurations to a friend! (through ssh anonymous@domain)"
 
 arguments = parser\parse!
 
-friendClass = require "friend.moon"
+if arguments.acceptfriend
+	friendPath = "#{cachePath}/friend_#{arguments.friendname}.moon"
+	myfriend = friendutil.importFriends friendPath
+	myfriend.status = "true friend"
+	friendutil.exportFriends myfriend, friendPath
+	print "accepting #{arguments.friendname} as a true friend"
 
-friends = do
-	code = moonscript.loadfile "myfriends.moon"
+if arguments.iwant
+	friendPath = "#{cachePath}/friend_#{arguments.friendname}.moon"
+	myfriend = friendutil.importFriends friendPath
 
-	friends = {}
+	myfriend.given = {} -- TODO
+	tokens = string.gmatch arguments.tokenList, "([^,]+)"
+	for token in tokens
+		table.insert myfriend.given, token
 
-	util.setfenv code, {
-		friend: (name, opt) ->
-			table.insert friends, friendClass name, opt
-	}
-
-	code!
-
-	friends
+	f = Friend myfriend.name, myfriend
+	friendutil.exportFriends myfriend, friendPath
+	print "our friend: #{f\str!}"
 
 if arguments.list
-	for friend in *friends
-		friend\print!
-	os.exit 0
+	print "listing friends"
+	for i in *scandir "#{cachePath}/friend_*"
+		myfriend = friendutil.importFriends i
+		f = Friend myfriend.name, myfriend
+		f\print!
 
-ssh, reason = process.exec "ssh", {"anonymous@#{arguments.domain}"}
+if arguments.newfriend
+	print "new friend: #{arguments.friendname}"
 
-unless ssh
-	print reason
-	os.exit 1
+	friendPath = "#{cachePath}/friend_#{arguments.friendname}.moon"
+	f = Friend arguments.friendname, {status: "received"}
+	friendutil.exportFriends f, friendPath
+	print "our friend: #{f\str!}"
+
+-- friends = do
+-- 	code = moonscript.loadfile "myfriends.moon"
+-- 
+-- 	friends = {}
+-- 
+-- 	util.setfenv code, {
+-- 		friend: (name, opt) ->
+-- 			table.insert friends, Friend name, opt
+-- 	}
+-- 
+-- 	code!
+-- 
+-- 	friends
+-- 
+-- if arguments.list
+-- 	for friend in *friends
+-- 		friend\print!
+-- 	os.exit 0
 
 sshInput = ""
-
 readSSHLine = (ssh) ->
 	coroutine.wrap ->
 		while process.waitpid ssh\pid!, process.WNOHANG
@@ -63,24 +134,119 @@ readSSHLine = (ssh) ->
 
 					coroutine.yield line
 
+sshWhile = (domain, greetingmsg) ->
 
-beyondMotd = false
-for line in readSSHLine ssh
-	unless beyondMotd
-		if line\match '"I am a friendly server"'
-			beyondMotd = true
+	ssh, reason = process.exec "ssh", {"anonymous@#{domain}"}
+
+	unless ssh
+		print reason
+		os.exit 1
+
+	for line in readSSHLine ssh
+		if line\match greetingmsg
+			break
 		else
 			print "MOTD: ", line
-	else
-		ssh\stdin json.encode("let's be friends").."\n"
+	ssh
 
+
+-- search for the friend
+ourfriend = nil
+for friend in *friends
+	if friend.name == arguments.domain
+		print "we will ask our friend: #{friend}"
+		ourfriend = friend
+
+unless ourfriend
+	print "friend '#{arguments.domain}' not found"
+	os.exit 1
+
+-- There are two options:
+--		1. this friend is "received", which means we may just accept him/her or going to tell him/her from a ssh connection
+--		2. otherwise, we should ask for a friend to be our friend
+
+
+if arguments.request
+	-- endpoint ssh and the greeting message
+	ssh = sshWhile arguments.domain '"I am a friendly server"'
+
+	-- after the motd, let's send our request
+
+	request = {
+		command: "let's be friends!"
+		name: ""
+	}
+	ssh\stdin json.encode("let's be friends").."\n"
+
+	for line in readSSHLine ssh
 		success, input = pcall -> json.decode line
 		unless success
 			print "message not understood: ", line
 			os.exit 1
 
 		print "received #{require("pl.pretty").write input}"
+		print "END"
+		os.exit 0
 
-		if input == "hi"
-			print "sending friendship request™"
-			ssh\stdin json.encode("let's be friends").."\n"
+-- TODO
+if arguments.sendtokens
+	-- endpoint ssh and the greeting message
+	ssh = sshWhile arguments.domain '"I am a friendly server"'
+
+	-- search a friend
+	f = getFriend arguments.domain
+	unless f
+		print "there is no friend #{arguments.domain}"
+		os.exit 1
+
+	-- {"help/nsd": "lolConfig"}, {"beHelped/nsd": "NSD_CONFIG"}
+
+	request = {
+		command: 	"I know what we can do!"
+		, name: 	f.name
+		, password:	f.password
+		, wants:    [ k for k, in pairs (f.services) ]
+	}
+
+	-- after the motd, let's send the configuration
+	ssh\stdin json.encode(request).."\n"
+
+	for line in readSSHLine ssh
+		success, input = pcall -> json.decode line
+		unless success
+			print "message not understood: ", line
+			os.exit 1
+
+		print "received #{require("pl.pretty").write input}"
+		print "END"
+		os.exit 0
+
+
+-- TODO
+if arguments.letsdothis
+	-- endpoint ssh and the greeting message
+	ssh = sshWhile arguments.domain '"I am a friendly server"'
+
+	-- search a friend
+	f = getFriend arguments.domain
+	unless f
+		print "there is no friend #{arguments.domain}"
+		os.exit 1
+
+	request = {
+		command: 	"let's do this!"
+		, name: 	f.name
+		, password:	f.password
+		, services: f.services
+	}
+
+	-- after the motd, let's send the configuration
+	ssh\stdin json.encode(request).."\n"
+
+	for line in readSSHLine ssh
+		success, input = pcall -> json.decode line
+		unless success
+			print "message not understood: ", line
+			os.exit 1
+
+		print "received #{require("pl.pretty").write input}"
