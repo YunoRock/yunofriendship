@@ -150,16 +150,16 @@ sshWhile = (domain, greetingmsg) ->
 	ssh
 
 
--- search for the friend
-ourfriend = nil
-for friend in *friends
-	if friend.name == arguments.domain
-		print "we will ask our friend: #{friend}"
-		ourfriend = friend
-
-unless ourfriend
-	print "friend '#{arguments.domain}' not found"
-	os.exit 1
+-- -- search for the friend
+-- ourfriend = nil
+-- for friend in *friends
+-- 	if friend.name == arguments.domain
+-- 		print "we will ask our friend: #{friend}"
+-- 		ourfriend = friend
+-- 
+-- unless ourfriend
+-- 	print "friend '#{arguments.domain}' not found"
+-- 	os.exit 1
 
 -- There are two options:
 --		1. this friend is "received", which means we may just accept him/her or going to tell him/her from a ssh connection
@@ -173,10 +173,10 @@ if arguments.request
 	-- after the motd, let's send our request
 
 	request = {
-		command: "let's be friends!"
-		name: ""
+		command: 	"let's be friends!"
+		name: 		"karchnu"
 	}
-	ssh\stdin json.encode("let's be friends").."\n"
+	ssh\stdin json.encode(request).."\n"
 
 	for line in readSSHLine ssh
 		success, input = pcall -> json.decode line
@@ -199,13 +199,11 @@ if arguments.sendtokens
 		print "there is no friend #{arguments.domain}"
 		os.exit 1
 
-	-- {"help/nsd": "lolConfig"}, {"beHelped/nsd": "NSD_CONFIG"}
-
 	request = {
 		command: 	"I know what we can do!"
-		, name: 	f.name
-		, password:	f.password
-		, wants:    [ k for k, in pairs (f.services) ]
+		name: 		"karchnu" -- TODO: FIXME: change the name!
+		password:	f.password
+		wants:    	f.given
 	}
 
 	-- after the motd, let's send the configuration
@@ -235,9 +233,9 @@ if arguments.letsdothis
 
 	request = {
 		command: 	"let's do this!"
-		, name: 	f.name
-		, password:	f.password
-		, services: f.services
+		name: 		f.name
+		password:	f.password
+		services: 	f.services
 	}
 
 	-- after the motd, let's send the configuration

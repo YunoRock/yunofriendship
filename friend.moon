@@ -9,7 +9,7 @@ class
 
 		-- possible status are: received, asked, true friend
 		@status = opt.status or "unknown"
-		@servicesConfigured = opt.services or opt.servicesConfigured or {}
+		@configs = opt.configs or {}
 
 		@givenTokens = opt.given or opt.givenTokens or {}
 		@wantsTokens = opt.wants or opt.wantsTokens or {}
@@ -17,9 +17,9 @@ class
 		-- Tokens that are both “given” and “wanted”.
 		@validatedTokens = [token for token in *@givenTokens when @\wants token]
 
-	services: (service) =>
-		for e in *@servicesConfigured
-			if e == service
+	configs: (service) =>
+		for k,v in *(pairs @configs)
+			if k == service
 				return true
 		false
 
@@ -78,4 +78,11 @@ class
 		for token in *@givenTokens
 			printStr ..= "\n\t(given): " .. colors.blue("#{token}")
 
+
+		if @configs
+			for i,s in pairs(@configs)
+				if s
+					for j,v in pairs(s)
+						printStr ..= "\n\t\tmy configuration of #{j} is:  #{require("pl.pretty").write v}"
+				
 		print printStr

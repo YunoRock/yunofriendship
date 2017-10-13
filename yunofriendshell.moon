@@ -72,7 +72,7 @@ letsdothis = (friendReq) ->
 
 	friendname = friendReq.name
 
-	unless friendReq.services
+	unless friendReq.configs
 		say json.encode {answer: "You didn't provide useful info! :( (what are the services you want to share?)"}
 		return
 
@@ -82,16 +82,28 @@ letsdothis = (friendReq) ->
 
 	-- TODO: check passwords
 
-	-- replace the confguration of the service if present
-	unless myfriend.servicesConfigured
-		myfriend.servicesConfigured = {}
+	-- PRINT DEBUG
+	-- if myfriend.configs
+	-- 	for i,s in pairs(myfriend.configs)
+	-- 		for j,v in pairs(s)
+	-- 			print "ALREADY HERE: configuration of key #{j},", "value: #{require("pl.pretty").write v}"
 
-	for s in *friendReq.services
-		myfriend.servicesConfigured[s.name] = s.info
+	unless myfriend.configs
+		myfriend.configs = {}
+
+	-- replace the confguration of the service if present
+	-- print "configuration received: #{require("pl.pretty").write friendReq.configs}"
+	for i,s in pairs(friendReq.configs)
+		-- TODO: check if provided services are those you are willing to accept
+		myfriend.configs[i] = friendReq.configs[i]
+
+		-- -- PRINT DEBUG
+		-- for j,v in pairs(s)
+		-- 	print "configuration of key #{j},", "value: #{require("pl.pretty").write v}"
 
 	f = Friend myfriend.name, myfriend
 	friendutil.exportFriends f, friendPath
-	say json.encode {answer: "here my friend!", friend: "#{f\str!}"}
+	say json.encode {answer: "ok let's do this!", friend: "#{f\str!}"} -- DEBUG: , configs: ["[#{require("pl.pretty").write f.configs[k]}]" for k,v in pairs(f.configs)]
 
 
 
