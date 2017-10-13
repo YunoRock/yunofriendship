@@ -96,25 +96,6 @@ if arguments.newfriend
 	friendutil.exportFriends f, friendPath
 	print "our friend: #{f\str!}"
 
--- friends = do
--- 	code = moonscript.loadfile "myfriends.moon"
--- 
--- 	friends = {}
--- 
--- 	util.setfenv code, {
--- 		friend: (name, opt) ->
--- 			table.insert friends, Friend name, opt
--- 	}
--- 
--- 	code!
--- 
--- 	friends
--- 
--- if arguments.list
--- 	for friend in *friends
--- 		friend\print!
--- 	os.exit 0
-
 sshInput = ""
 readSSHLine = (ssh) ->
 	coroutine.wrap ->
@@ -150,32 +131,19 @@ sshWhile = (domain, greetingmsg) ->
 	ssh
 
 
--- -- search for the friend
--- ourfriend = nil
--- for friend in *friends
--- 	if friend.name == arguments.domain
--- 		print "we will ask our friend: #{friend}"
--- 		ourfriend = friend
--- 
--- unless ourfriend
--- 	print "friend '#{arguments.domain}' not found"
--- 	os.exit 1
-
--- There are two options:
---		1. this friend is "received", which means we may just accept him/her or going to tell him/her from a ssh connection
---		2. otherwise, we should ask for a friend to be our friend
-
-
 if arguments.request
 	-- endpoint ssh and the greeting message
-	ssh = sshWhile arguments.domain '"I am a friendly server"'
+	ssh = sshWhile arguments.domain, '"I am a friendly server"'
 
 	-- after the motd, let's send our request
-
 	request = {
 		command: 	"let's be friends!"
 		name: 		"karchnu"
 	}
+
+	-- PRINT DEBUG
+	print "our request is #{require("pl.pretty").write json.encode(request)}"
+
 	ssh\stdin json.encode(request).."\n"
 
 	for line in readSSHLine ssh
@@ -191,7 +159,7 @@ if arguments.request
 -- TODO
 if arguments.sendtokens
 	-- endpoint ssh and the greeting message
-	ssh = sshWhile arguments.domain '"I am a friendly server"'
+	ssh = sshWhile arguments.domain, '"I am a friendly server"'
 
 	-- search a friend
 	f = getFriend arguments.domain
@@ -223,7 +191,7 @@ if arguments.sendtokens
 -- TODO
 if arguments.letsdothis
 	-- endpoint ssh and the greeting message
-	ssh = sshWhile arguments.domain '"I am a friendly server"'
+	ssh = sshWhile arguments.domain, '"I am a friendly server"'
 
 	-- search a friend
 	f = getFriend arguments.domain

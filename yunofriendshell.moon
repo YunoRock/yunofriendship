@@ -4,7 +4,7 @@ io.stdout\flush!
 
 json = require "json"
 
-Friend = require("friend")
+Friend = require "friend"
 
 -- FIXME
 cachePath = "/tmp"
