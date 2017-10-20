@@ -4,9 +4,10 @@ export *
 importFriends = (friendPath) ->
 	file, reason = io.open friendPath, "r+"
 
+	-- if there is no file, then it's a new friend!
 	unless file
-		print "warning: friends cannot be reached :(", "path: '#{friendPath}'"
-		print "         ... reason: #{reason}"
+		-- print "warning: friends cannot be reached :(", "path: '#{friendPath}'"
+		-- print "         ... reason: #{reason}"
 		return
 
 	serpent = require "serpent"

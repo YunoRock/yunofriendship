@@ -25,7 +25,7 @@ diagram {
     client -> remoted [label = "command: \"I know what we can do!\",
 		   name: \"yourname\",
 		   password: \"sharedpassword\",
-		   whatiwant: [ \"beHelped/nsd\", \"help/nsd\" ]",
+		   wants: [ \"beHelped/nsd\", \"help/nsd\" ]",
 		   rightnote="you say what you're willing to do
 			   and what you ask to your friend
 			   through tokens" ];

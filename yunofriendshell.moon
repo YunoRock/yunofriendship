@@ -2,6 +2,8 @@
 io.stdout\write '"I am a friendly server"\n'
 io.stdout\flush!
 
+package.moonpath ..= ";/media/fast/perso/yunofriendship/?.moon"
+
 json = require "json"
 
 Friend = require "friend"
@@ -66,7 +68,7 @@ shareTokens = (friendReq) ->
 
 	f = Friend myfriend.name, myfriend
 	friendutil.exportFriends f, friendPath
-	say json.encode {answer: "here my friend!", friend: "#{f\str!}"}
+	say json.encode {answer: "ok, here what I want", friend: "#{f\str!}", given: f.givenTokens}
 
 letsdothis = (friendReq) ->
 
@@ -134,7 +136,7 @@ while true
 		continue
 
 	-- select the right command to execute
-	if decodedline.command and decodedline.command == "let's be friends"
+	if decodedline.command and decodedline.command == "let's be friends!"
 		beFriends decodedline.name
 	elseif decodedline.command and decodedline.command == "I know what we can do!"
 		-- your friend should send his/her password each time
@@ -149,7 +151,7 @@ while true
 			continue
 		letsdothis decodedline
 	else
-		say json.encode {answer: "You didn't provide useful info! :("}
+		say json.encode {answer: "You didn't provide a good command! :("}
 
 
 

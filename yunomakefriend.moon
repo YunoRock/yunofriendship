@@ -24,40 +24,63 @@ scandir = (directory) ->
 getFriend = (friendname) ->
 	for i in *scandir "#{cachePath}/friend_*"
 		myfriend = friendutil.importFriends i
-		if myfriend.name == friendname
-			f = Friend myfriend.name, myfriend
-			f\print!
-			return f
+		if myfriend
+			if myfriend.name == friendname
+				f = Friend myfriend.name, myfriend
+				f\print!
+				return f
+		else
+			return
 
 parser = with argparse "yunomakefriend", "Tell your friends you love them!"
 	with \command "list"
-		\description "list all your friends!"
+		\description "LOCAL: list all your friends!"
 	with \command "acceptfriend"
 		with \argument "friendname"
 			\args 1
-		\description "accept a friend! <3  (done in local, no communication)"
+		\description "LOCAL: accept a friend! <3  (done in local, no communication)"
 	with \command "iwant"
+		with \argument "myname"
+			\args 1
 		with \argument "friendname"
 			\args 1
 		with \argument "tokenList"
 			\args 1
-		\description "give a friend some tokens to help him/her or asking for help (done in local, no communication)"
+		\description "LOCAL: give a friend some tokens to help him/her or asking for help (done in local, no communication)"
 	with \command "newfriend"
+		with \argument "myname"
+			\args 1
 		with \argument "friendname"
 			\args 1
-		\description "create a new friend (or erase an existing one), debug tool"
+		\description "LOCAL: create a new friend (or erase an existing one), debug tool"
 	with \command "request"
+		with \argument "myname"
+			\args 1
 		with \argument "domain"
 			\args 1
-		\description "let's ask someone to be friends! (request a friend through ssh anonymous@domain)"
+		\description "REMOTE: let's ask someone to be friends! (request a friend through ssh anonymous@domain)"
 	with \command "sendtokens"
+		with \argument "myname"
+			\args 1
 		with \argument "domain"
 			\args 1
-		\description "send the tokens (what you are willing to do and accept) to a friend! (through ssh anonymous@domain)"
+		\description "REMOTE: send the tokens (what you are willing to do and accept) to a friend! (through ssh anonymous@domain)"
+	with \command "sendtokensdebug"
+		with \argument "myname"
+			\args 1
+		with \argument "domain"
+			\args 1
+		with \argument "password"
+			\args 1
+		with \argument "given"
+			\args 1
+		\description "REMOTE, DEBUG: send the tokens (what you are willing to do and accept) to a friend! (through ssh anonymous@domain)"
 	with \command "letsdothis"
+		with \argument "myname"
+			\args 1
 		with \argument "domain"
 			\args 1
-		\description "send the service configurations to a friend! (through ssh anonymous@domain)"
+		\description "REMOTE: send the service configurations to a friend! (through ssh anonymous@domain)"
 
 arguments = parser\parse!
 
@@ -99,12 +122,22 @@ if arguments.newfriend
 sshInput = ""
 readSSHLine = (ssh) ->
 	coroutine.wrap ->
+		-- print "BEFORE WHILE"
 		while process.waitpid ssh\pid!, process.WNOHANG
-			s = ssh\stderr!
-			if s
-				io.stderr\write "ssh: ", s
 
+		-- 	print "BEFORE REQ STDERR"
+		-- 	s, err, again = ssh\stderr! -- data, error string (nil on success), again (true if got a EAGAIN or EWOULDBLOCK)
+		-- 	print "JUST AFTER REQ STDERR"
+		-- 	if s
+		-- 		io.stderr\write "ssh: ", s
+		-- 	elseif err
+		-- 		io.stderr\write "ERROR: ", err
+		-- 	elseif again
+		-- 		io.stderr\write "EAGAIN or EWOULDBLOCK"
+
+			-- print "BEFORE READING STDOUT"
 			s = ssh\stdout!
+			-- print "AFTER READING STDOUT"
 			if s
 				sshInput ..= s
 
@@ -138,22 +171,22 @@ if arguments.request
 	-- after the motd, let's send our request
 	request = {
 		command: 	"let's be friends!"
-		name: 		"karchnu"
+		name: 		arguments.myname
 	}
 
 	-- PRINT DEBUG
-	print "our request is #{require("pl.pretty").write json.encode(request)}"
+	print "our request is #{json.encode(request)}"
 
 	ssh\stdin json.encode(request).."\n"
+	-- print "AFTER OUR REQUEST"
 
 	for line in readSSHLine ssh
 		success, input = pcall -> json.decode line
 		unless success
 			print "message not understood: ", line
-			os.exit 1
+			continue
 
 		print "received #{require("pl.pretty").write input}"
-		print "END"
 		os.exit 0
 
 -- TODO
@@ -169,7 +202,7 @@ if arguments.sendtokens
 
 	request = {
 		command: 	"I know what we can do!"
-		name: 		"karchnu" -- TODO: FIXME: change the name!
+		name: 		arguments.myname
 		password:	f.password
 		wants:    	f.given
 	}
@@ -184,7 +217,37 @@ if arguments.sendtokens
 			os.exit 1
 
 		print "received #{require("pl.pretty").write input}"
-		print "END"
+		os.exit 0
+
+if arguments.sendtokensdebug
+	-- endpoint ssh and the greeting message
+	ssh = sshWhile arguments.domain, '"I am a friendly server"'
+
+	-- TODO: do not search for a friend, tokens are given by cmdline
+
+	tokens = string.gmatch arguments.given, "([^,]+)"
+	given = {}
+	for token in tokens
+		table.insert given, token
+
+	request = {
+		command: 	"I know what we can do!"
+		name: 		arguments.myname
+		password:	arguments.password
+		wants:    	given
+	}
+
+	-- after the motd, let's send the configuration
+	print "our request is #{json.encode(request)}"
+	ssh\stdin json.encode(request).."\n"
+
+	for line in readSSHLine ssh
+		success, input = pcall -> json.decode line
+		unless success
+			print "message not understood: ", line
+			os.exit 1
+
+		print "received #{require("pl.pretty").write input}"
 		os.exit 0
 
 
