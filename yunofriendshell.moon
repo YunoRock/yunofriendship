@@ -36,9 +36,17 @@ beFriends = (friendname) ->
 				say json.encode {answer: "status unknown :("}
 	else
 		-- if not present: write tmp friend file
-		f = Friend friendname, {status: "received"}
+		password = ""
+
+		pfile = io.popen "cat /dev/urandom | base64 | head -n 1"
+		for line in pfile\lines!
+			password = line
+			break
+		pfile\close!
+
+		f = Friend friendname, {status: "received", password: "#{password}"}
 		friendutil.exportFriends f, friendPath
-		say json.encode {answer: "new friend!", friend: "#{f\str!}"}
+		say json.encode {answer: "new friend!", friend: "#{f\str!}", password: "#{password}"}
 
 shareTokens = (friendReq) ->
 
